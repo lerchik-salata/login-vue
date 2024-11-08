@@ -25,7 +25,7 @@
         type="password"
         placeholder="Confirm your password"
         v-model="form.confirmPassword"
-        :error-message="confirmPasswordError"
+        :error-message="errors.confirmPassword"
         @input="handleInput('confirmPassword')"
         required
     />
@@ -70,18 +70,23 @@
         <label for="female">Female</label>
       </div>
     </div>
-    <button type="submit" class="login-btn">Log In</button>
+
+    <button type="submit" class="login-btn">Register</button>
+
+    <Table :entries="entries" @delete-selected="deleteSelectedEntries" />
   </form>
 </template>
 
 <script>
 import InputField from './InputField.vue';
+import Table from '@/table/table.vue';
 import validationMixin from '../mixins/validationMixin.js';
 
 export default {
   name: 'LoginForm',
   components: {
     InputField,
+    Table,
   },
   mixins: [validationMixin],
   data() {
@@ -97,22 +102,27 @@ export default {
       errors: {
         username: '',
         password: '',
+        confirmPassword: '',
         email: '',
         phone: '',
       },
-      confirmPasswordError: '',
+      entries: [],
     };
   },
   methods: {
     handleSubmit() {
       this.validateForm();
 
-      if (Object.values(this.errors).some(error => error) || this.confirmPasswordError) {
+      if (Object.values(this.errors).some(error => error)) {
         return;
       }
 
-      alert('Form submitted!');
-      console.log(this.form);
+      this.entries.push({
+        ...this.form,
+        selected: false,
+      });
+
+      this.resetForm();
     },
     handleInput(field) {
       const value = this.form[field];
@@ -120,7 +130,7 @@ export default {
       const error = this.validateField(field, value);
 
       if (field === 'confirmPassword') {
-        this.confirmPasswordError = error;
+        this.errors.confirmPassword = error;
       } else {
         if (error) {
           this.errors[field] = error;
@@ -142,51 +152,24 @@ export default {
     },
     validateForm() {
       Object.keys(this.form).forEach(field => {
-        if (this.form[field]) {
-          this.errors[field] = '';
+        if (!this.form[field] && field !== 'confirmPassword') {
+          this.errors[field] = `${field} is required`;
         }
       });
-    }
+    },
+    resetForm() {
+      this.form = {
+        username: '',
+        password: '',
+        confirmPassword: '',
+        email: '',
+        phone: '',
+        gender: '',
+      };
+    },
+    deleteSelectedEntries() {
+      this.entries = this.entries.filter(entry => !entry.selected);
+    },
   },
 };
 </script>
-
-<style scoped>
-.login-form {
-  max-width: 600px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.login-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #42b983;
-  color: white;
-  font-size: 1.1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 1rem;
-}
-
-.login-btn:hover {
-  background-color: #367c56;
-}
-
-.gender-field {
-  margin-top: 1rem;
-}
-
-.gender-field label {
-  font-weight: bold;
-}
-
-.gender-field div {
-  margin-bottom: 0.5rem;
-}
-</style>
